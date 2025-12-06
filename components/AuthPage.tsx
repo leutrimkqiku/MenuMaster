@@ -279,8 +279,23 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onRegister, onVerify, onRe
               </div>
 
               {displayError && (
-                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md border border-red-100 flex items-start gap-2 animate-fadeIn">
-                  <span className="font-medium">Gabim:</span> {displayError}
+                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md border border-red-100 flex flex-col items-start gap-2 animate-fadeIn">
+                  <div className="flex items-center gap-2">
+                     <span className="font-medium">Gabim:</span> {displayError}
+                  </div>
+                  {/* Suggest Registration if Credential Error */}
+                  {displayError.includes('i pasaktë') && isLogin && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                            setIsLogin(false);
+                            setLocalError('');
+                        }}
+                        className="text-indigo-700 font-bold underline hover:text-indigo-900 mt-1"
+                      >
+                          Nuk keni llogari? Regjistrohuni këtu.
+                      </button>
+                  )}
                 </div>
               )}
 
