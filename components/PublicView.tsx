@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Menu, Company, Product } from '../types';
 import { ShoppingBag, Phone, MapPin, BellRing, Info, ChevronLeft, X, ChefHat, Star, Clock } from 'lucide-react';
 
@@ -14,7 +14,6 @@ const PublicView: React.FC<PublicViewProps> = ({ menu, company }) => {
   // Extract unique categories from products
   const categories = useMemo(() => {
     const cats = new Set(menu.products.map(p => p.category?.trim() || 'Të Tjera'));
-    // If no categories are defined at all, don't show tabs unless needed
     const uniqueCats = Array.from(cats).filter(c => c !== '');
     return ['Të gjitha', ...uniqueCats.sort()];
   }, [menu.products]);
@@ -25,6 +24,34 @@ const PublicView: React.FC<PublicViewProps> = ({ menu, company }) => {
     return menu.products.filter(p => (p.category?.trim() || 'Të Tjera') === activeCategory);
   }, [activeCategory, menu.products]);
 
+  // --- History Handling for "New Page" Feel ---
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      // If back button is pressed and we have a product open, close it
+      if (selectedProduct) {
+        setSelectedProduct(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedProduct]);
+
+  const openProduct = (product: Product) => {
+    // Push state so back button works
+    window.history.pushState({ productId: product.id }, '', `#/product/${product.id}`);
+    setSelectedProduct(product);
+  };
+
+  const closeProduct = () => {
+    // Go back in history to remove the hash
+    window.history.back();
+    // State update happens in popstate listener, but for immediate UI response we can set it too
+    // However, strictly better to let the popstate handler do it or just rely on back() if we are 100% synced.
+    // To ensure smoothness:
+    setSelectedProduct(null);
+  };
+
   // Handle "New Page" feel
   if (selectedProduct) {
     return (
@@ -32,7 +59,7 @@ const PublicView: React.FC<PublicViewProps> = ({ menu, company }) => {
             <div className="relative">
                 {/* Back Button */}
                 <button 
-                    onClick={() => setSelectedProduct(null)}
+                    onClick={closeProduct}
                     className="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-md p-2 rounded-full shadow-lg text-gray-800 hover:bg-white transition-all"
                 >
                     <ChevronLeft className="w-6 h-6" />
@@ -163,7 +190,7 @@ const PublicView: React.FC<PublicViewProps> = ({ menu, company }) => {
         {filteredProducts.map((product) => (
           <div 
             key={product.id} 
-            onClick={() => setSelectedProduct(product)}
+            onClick={() => openProduct(product)}
             className="group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4 items-center hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
           >
               {/* Product Thumbnail (Dynamic Placeholder) */}
